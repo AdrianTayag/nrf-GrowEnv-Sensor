@@ -1,0 +1,10 @@
+{
+    "nrf-connect.applications": [
+        "${workspaceFolder}"
+    ],
+    "files.associations": {
+        "telemetry_mgr.h": "c",
+        "byteorder.h": "c",
+        "errno.h": "c"
+    }
+}
