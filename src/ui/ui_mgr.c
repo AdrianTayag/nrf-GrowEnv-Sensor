@@ -7,10 +7,11 @@
 
 #include "ui_mgr.h"
 #include "product_cfg.h"
+#include "product_msgs.h"
 
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
-
+#include <zephyr/zbus/zbus.h>
 #include <dk_buttons_and_leds.h>
 #include <zephyr/drivers/gpio.h>
 
@@ -25,6 +26,8 @@
 static bool app_button_state;
 
 LOG_MODULE_REGISTER(ui_mgr, LOG_LEVEL_DBG);
+
+ZBUS_SUBSCRIBER_DEFINE(ui_mgr_sub, 5);
 
 static void button_changed(uint32_t button_state, uint32_t has_changed)
 {
@@ -62,10 +65,16 @@ void uiMgr_start(void)
 	if (err) {
 		LOG_ERR("Button init failed (err %d)\n", err);
 	}
-    for(;;)
-    {
-        k_msleep(1000);
-    }
+	const struct zbus_channel *chan;
+
+	while (!zbus_sub_wait(&ui_mgr_sub, &chan, K_FOREVER)) {
+		sensor_msg msg;
+
+		zbus_chan_read(chan, &msg, K_MSEC(200));
+
+		LOG_INF("UI_MGR: Sensor msg received: Sensor = %u, Value = %u, ",
+			msg.sensor, msg.value);
+	}
 }
 
 K_THREAD_DEFINE(uiMgr_id, STACKSIZE, uiMgr_start, NULL, NULL, NULL,

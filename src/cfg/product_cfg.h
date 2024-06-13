@@ -4,6 +4,9 @@
  *
  * SPDX-License-Identifier: MIT
  */
+#ifndef _PRODUCT_CFG_H_
+#define _PRODUCT_CFG_H_
+
 
 #define DEVICE_NAME             CONFIG_BT_DEVICE_NAME
 #define DEVICE_NAME_LEN         (sizeof(DEVICE_NAME) - 1)
@@ -12,3 +15,5 @@
 #define THREAD_LOW_PRIORITY 7
 #define THREAD_MID_PRIORITY 6
 #define THREAD_HIGH_PRIORITY 5
+
+#endif /* _PRODUCT_CFG_H_ */

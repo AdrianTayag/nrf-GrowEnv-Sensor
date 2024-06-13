@@ -7,6 +7,7 @@
 
 #include "telemetry_mgr.h"
 #include "product_cfg.h"
+#include "product_msgs.h"
 
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
@@ -29,6 +30,8 @@ static const struct bt_data sd[] = {
 };
 
 LOG_MODULE_REGISTER(telemetry_mgr, LOG_LEVEL_DBG);
+
+ZBUS_SUBSCRIBER_DEFINE(telemetry_mgr_sub, 5);
 
 static void connected(struct bt_conn *conn, uint8_t err)
 {
@@ -95,10 +98,17 @@ void telemetryMgr_start(void)
 	if (IS_ENABLED(CONFIG_SETTINGS)) {
 		settings_load();
 	}
-
+	const struct zbus_channel *chan;
     for(;;)
     {
-        k_msleep(1000);
+		while (!zbus_sub_wait(&telemetry_mgr_sub, &chan, K_FOREVER)) {
+			sensor_msg msg;
+
+			zbus_chan_read(chan, &msg, K_MSEC(200));
+
+			LOG_INF("TELEMETRY_MGR: Sensor msg received: Sensor = %u, Value = %u, ",
+				msg.sensor, msg.value);
+		}
     }
 }
 
