@@ -108,6 +108,8 @@ void telemetryMgr_start(void)
 
 			LOG_INF("TELEMETRY_MGR: Sensor msg received: Sensor = %u, Value = %u, ",
 				msg.sensor, msg.value);
+
+			// TODO: Send data via Bluetooth
 		}
     }
 }

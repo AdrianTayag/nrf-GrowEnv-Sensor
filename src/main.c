@@ -20,5 +20,6 @@ int main(void)
 {
 	printk("Starting NRF GrowEnv Sensor Application...\n");
 	
+	// Main thread exits, freeing up memory
 	return 0;
 }

@@ -36,6 +36,8 @@ static void button_changed(uint32_t button_state, uint32_t has_changed)
 		uint32_t user_button_state = button_state & USER_BUTTON;
 
 		// bt_lbs_send_button_state(user_button_state);
+
+		// TODO: Add button debouncing (40ms) for valid press
 		app_button_state = user_button_state ? true : false;
 	}
 }
@@ -74,6 +76,7 @@ void uiMgr_start(void)
 
 		LOG_INF("UI_MGR: Sensor msg received: Sensor = %u, Value = %u, ",
 			msg.sensor, msg.value);
+		// TODO: Update display buffer, send work item for LCD display
 	}
 }
 
