@@ -15,6 +15,7 @@
 #include <zephyr/drivers/adc.h>
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
+#include <zephyr/drivers/sensor.h>
 
 static int soilMoisture_init( void );
 static void soilMoisture_read( void );
@@ -65,15 +66,15 @@ static void soilMoisture_read( void )
     }
 
     val_mv = (int)buf;
-    LOG_INF("ADC reading[%u]: %s, channel %d: Raw: %d", count++, adc_channel.dev->name,
-        adc_channel.channel_id, val_mv);
+    // LOG_INF("ADC reading[%u]: %s, channel %d: Raw: %d", count++, adc_channel.dev->name,
+    //     adc_channel.channel_id, val_mv);
 
     ret = adc_raw_to_millivolts_dt(&adc_channel, &val_mv);
     if (ret < 0) {
         LOG_WRN(" (value in mV not available)\n");
     } 
     else {
-        LOG_INF(" = %d mV", val_mv);
+        LOG_INF("Soil ADC Reading = %d mV", val_mv);
         sensor_msg soil_data = {0};
 
         soil_data.sensor = SOIL_MOISTURE;
@@ -82,15 +83,51 @@ static void soilMoisture_read( void )
     }
 }
 
+static void dht_init( void )
+{
+    const struct device *const dht22 = DEVICE_DT_GET_ONE(aosong_dht);
+	if (!device_is_ready(dht22)) {
+		printf("Device %s is not ready\n", dht22->name);
+	}
+}
+
 void sensorMgr_start(void)
 {
     LOG_INF("Sensor Mgr Started\n");
     soilMoisture_init();
+    dht_init();
     for(;;)
     {
         // Convert to timer based once ZBus is implemented
+        k_msleep(2000);
         soilMoisture_read();
-        k_msleep(1000);
+
+        const struct device *const dht22 = DEVICE_DT_GET_ONE(aosong_dht);
+        int rc = sensor_sample_fetch(dht22);
+        if (rc != 0) {
+            LOG_INF("fetch failed: %d\n", rc);
+            continue;
+        }
+        struct sensor_value temperature = { 0 };
+        struct sensor_value humidity = { 0 };
+
+        rc = sensor_channel_get(dht22, SENSOR_CHAN_AMBIENT_TEMP,
+                    &temperature);
+        if (rc == 0) {
+            rc = sensor_channel_get(dht22, SENSOR_CHAN_HUMIDITY,
+                        &humidity);
+        }
+        if (rc != 0) {
+            LOG_INF("get failed: %d\n", rc);
+            continue;
+        }
+        else
+        {
+            LOG_INF("DHT %d Cel ; %d %%RH\n\n",
+                    temperature.val1,
+                    humidity.val1);
+        }
+
     }
 }
 

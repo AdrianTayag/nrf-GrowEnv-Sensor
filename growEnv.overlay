@@ -2,14 +2,12 @@
 / {
 	zephyr,user {
         io-channels = <&adc 0>;
-        dht-gpios = <&gpio0 5 0>;
 	};
-};
 
-&i2c1 {
-	bh1750@23 {
-		compatible = "rohm,bh1750";
-		reg = <0x23>;
+	dht11 {
+		compatible = "aosong,dht";
+		status = "okay";
+		dio-gpios = <&gpio0 5 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
 	};
 };
 
@@ -25,4 +23,8 @@
 		zephyr,input-positive = <NRF_SAADC_AIN0>; /* P0.02 for nRF52xx, P0.04 for nRF53xx */
 		zephyr,resolution = <12>;
 	};
+};
+
+&i2c1 {
+	status = "disabled";
 };
