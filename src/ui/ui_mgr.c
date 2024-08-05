@@ -78,6 +78,7 @@ void uiMgr_start(void)
 			msg.sensor, msg.value);
 		// TODO: Update display buffer, send work item for LCD display
 	}
+	LOG_ERR("UI MGR Thread exited.\n");
 }
 
 K_THREAD_DEFINE(uiMgr_id, STACKSIZE, uiMgr_start, NULL, NULL, NULL,

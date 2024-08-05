@@ -112,6 +112,7 @@ void telemetryMgr_start(void)
 			// TODO: Send data via Bluetooth
 		}
     }
+	LOG_ERR("TELEMETRY MGR Thread exited.\n");
 }
 
 K_THREAD_DEFINE(telemetryMgr_id, STACKSIZE, telemetryMgr_start, NULL, NULL, NULL,
