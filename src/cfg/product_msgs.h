@@ -17,7 +17,7 @@
 typedef enum {
     SOIL_MOISTURE = 0,
     TEMPERATURE,
-    HUMIDITY,
+    RELATIVE_HUMIDITY,
 }sensor_type;
 
 typedef struct {

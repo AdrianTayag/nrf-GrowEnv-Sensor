@@ -71,8 +71,6 @@ static void soilMoisture_read( void )
     }
 
     val_mv = (int)buf;
-    // LOG_INF("ADC reading[%u]: %s, channel %d: Raw: %d", count++, adc_channel.dev->name,
-    //     adc_channel.channel_id, val_mv);
 
     ret = adc_raw_to_millivolts_dt(&adc_channel, &val_mv);
     if (ret < 0) {
@@ -83,7 +81,7 @@ static void soilMoisture_read( void )
         sensor_msg soil_data = {0};
 
         soil_data.sensor = SOIL_MOISTURE;
-        soil_data.value = ret;
+        soil_data.value = val_mv;
         zbus_chan_pub(&sensor_data_chan, &soil_data, K_MSEC(250));
     }
 }
@@ -122,6 +120,16 @@ static void dht_read( void )
         LOG_INF("DHT %d Cel ; %d %%RH\n",
                 temperature.val1,
                 humidity.val1);
+
+        sensor_msg temp_data = {0};
+        temp_data.sensor = TEMPERATURE;
+        temp_data.value = temperature.val1;
+        zbus_chan_pub(&sensor_data_chan, &temp_data, K_MSEC(250));
+
+        sensor_msg rh_data = {0};
+        rh_data.sensor = RELATIVE_HUMIDITY;
+        rh_data.value = humidity.val1;
+        zbus_chan_pub(&sensor_data_chan, &rh_data, K_MSEC(250));
     }
 }
 
