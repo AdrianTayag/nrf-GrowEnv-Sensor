@@ -12,7 +12,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/zbus/zbus.h>
-#include <dk_buttons_and_leds.h>
+// #include <dk_buttons_and_leds.h>
 #include <zephyr/drivers/gpio.h>
 
 #define RUN_STATUS_LED          DK_LED1
@@ -27,29 +27,29 @@ static bool app_button_state;
 
 LOG_MODULE_REGISTER(ui_mgr, LOG_LEVEL_DBG);
 
-ZBUS_SUBSCRIBER_DEFINE(ui_mgr_sub, 5);
+ZBUS_MSG_SUBSCRIBER_DEFINE(ui_mgr_sub);
 
-static void button_changed(uint32_t button_state, uint32_t has_changed)
-{
-	LOG_INF("Button pressed: %d\n", has_changed);
-    if (has_changed & USER_BUTTON) {
-		uint32_t user_button_state = button_state & USER_BUTTON;
+// static void button_changed(uint32_t button_state, uint32_t has_changed)
+// {
+// 	LOG_INF("Button pressed: %d\n", has_changed);
+//     if (has_changed & USER_BUTTON) {
+// 		uint32_t user_button_state = button_state & USER_BUTTON;
 
-		// bt_lbs_send_button_state(user_button_state);
+// 		// bt_lbs_send_button_state(user_button_state);
 
-		// TODO: Add button debouncing (40ms) for valid press
-		app_button_state = user_button_state ? true : false;
-	}
-}
+// 		// TODO: Add button debouncing (40ms) for valid press
+// 		app_button_state = user_button_state ? true : false;
+// 	}
+// }
 
 static int init_button(void)
 {
 	int err;
 
-	err = dk_buttons_init(button_changed);
-	if (err) {
-		LOG_ERR("Cannot init buttons (err: %d)\n", err);
-	}
+	// err = dk_buttons_init(button_changed);
+	// if (err) {
+	// 	LOG_ERR("Cannot init buttons (err: %d)\n", err);
+	// }
 
 	return err;
 }
@@ -58,21 +58,21 @@ static int init_button(void)
 void uiMgr_start(void)
 {
     LOG_INF("UI Mgr Started\n");
-	int err = dk_leds_init();
-	if (err) {
-		LOG_ERR("LEDs init failed (err %d)\n", err);
-	}
+	// int err = dk_leds_init();
+	// if (err) {
+	// 	LOG_ERR("LEDs init failed (err %d)\n", err);
+	// }
 
-	err = init_button();
-	if (err) {
-		LOG_ERR("Button init failed (err %d)\n", err);
-	}
+	// err = init_button();
+	// if (err) {
+	// 	LOG_ERR("Button init failed (err %d)\n", err);
+	// }
 	const struct zbus_channel *chan;
 
-	while (!zbus_sub_wait(&ui_mgr_sub, &chan, K_FOREVER)) {
-		sensor_msg msg;
-
-		zbus_chan_read(chan, &msg, K_MSEC(200));
+	while (1) {
+		sensor_msg msg = {0};
+		int ret = zbus_sub_wait_msg(&ui_mgr_sub, &chan, &msg, K_FOREVER);
+		LOG_INF("Zbus ret: %d\n", ret);
 
 		LOG_INF("UI_MGR: Sensor msg received: Sensor = %u, Value = %u, ",
 			msg.sensor, msg.value);

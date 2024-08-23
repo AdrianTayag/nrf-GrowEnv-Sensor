@@ -1,0 +1,42 @@
+
+#include <zephyr/dt-bindings/adc/adc.h>
+/ {
+	zephyr,user {
+        io-channels = <&adc0 0>;
+	};
+
+	adc0: adc {
+		compatible = "zephyr,adc-emul";
+		nchannels = <1>;
+		ref-internal-mv = <3300>;
+		ref-external1-mv = <5000>;
+		#io-channel-cells = <1>;
+		status = "okay";
+	};
+
+	dht11 {
+		compatible = "aosong,dht";
+		status = "okay";
+		dio-gpios = <&gpio0 5 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+	};
+};
+
+&gpio0 {
+    compatible = "zephyr,gpio-emul";
+    gpio-controller;
+    wakeup-source;
+};
+
+&adc0 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	channel@0 {
+		reg = <0>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,vref-mv = <3300>;
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,resolution = <12>;
+	};
+};

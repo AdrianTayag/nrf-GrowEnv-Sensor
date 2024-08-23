@@ -15,6 +15,6 @@ ZBUS_CHAN_DEFINE(sensor_data_chan,  /* Name */
 
                  NULL, /* Validator */
                  NULL, /* User data */
-                 ZBUS_OBSERVERS(ui_mgr_sub, telemetry_mgr_sub), /* observers */
+                 ZBUS_OBSERVERS(ui_mgr_sub), /* observers */
                  ZBUS_MSG_INIT(.sensor = 0, .value = 0)		      /* Initial value {0} */
 );

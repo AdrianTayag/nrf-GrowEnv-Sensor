@@ -77,11 +77,84 @@ static void soilMoisture_read( void )
         sensor_msg soil_data = {0};
 
         soil_data.sensor = SOIL_MOISTURE;
+<<<<<<< Updated upstream
         soil_data.value = ret;
         zbus_chan_pub(&sensor_data_chan, &soil_data, K_MSEC(250));
     }
 }
 
+=======
+        soil_data.value = 20;
+        int zbus_ret = zbus_chan_pub(&sensor_data_chan, &soil_data, K_FOREVER);
+        LOG_INF("ZBUS Publish: %d\n", zbus_ret);
+    }
+}
+
+static void dht_init( void )
+{
+    const struct device *const dht22 = DEVICE_DT_GET_ONE(aosong_dht);
+	if (!device_is_ready(dht22)) {
+		LOG_INF("Device %s is not ready\n", dht22->name);
+	}
+}
+
+static void dht_read( void )
+{
+    #ifdef CONFIG_BOARD_NATIVE_SIM
+        sensor_msg temp_data = {0};
+        temp_data.sensor = TEMPERATURE;
+        temp_data.value = 32;
+        LOG_INF("Reading Temperature: %d\n", temp_data.value);
+        int zbus_ret = zbus_chan_pub(&sensor_data_chan, &temp_data, K_FOREVER);
+        LOG_INF("ZBUS Publish: %d\n", zbus_ret);
+
+        sensor_msg rh_data = {0};
+        rh_data.sensor = RELATIVE_HUMIDITY;
+        rh_data.value = 80;
+        LOG_INF("Reading Relative Humidity: %d\n", rh_data.value);
+        zbus_ret = zbus_chan_pub(&sensor_data_chan, &rh_data, K_FOREVER);
+        LOG_INF("ZBUS Publish: %d\n", zbus_ret);
+
+    #else
+    const struct device *const dht22 = DEVICE_DT_GET_ONE(aosong_dht);
+    int rc = sensor_sample_fetch(dht22);
+    if (rc != 0) {
+        LOG_INF("fetch failed: %d\n", rc);
+        return;
+    }
+    struct sensor_value temperature = { 0 };
+    struct sensor_value humidity = { 0 };
+
+    rc = sensor_channel_get(dht22, SENSOR_CHAN_AMBIENT_TEMP,
+                &temperature);
+    if (rc == 0) {
+        rc = sensor_channel_get(dht22, SENSOR_CHAN_HUMIDITY,
+                    &humidity);
+    }
+    if (rc != 0) {
+        LOG_INF("get failed: %d\n", rc);
+        return;
+    }
+    else
+    {
+        LOG_INF("DHT %d Cel ; %d %%RH\n",
+                temperature.val1,
+                humidity.val1);
+
+        sensor_msg temp_data = {0};
+        temp_data.sensor = TEMPERATURE;
+        temp_data.value = temperature.val1;
+        zbus_chan_pub(&sensor_data_chan, &temp_data, K_MSEC(250));
+
+        sensor_msg rh_data = {0};
+        rh_data.sensor = RELATIVE_HUMIDITY;
+        rh_data.value = humidity.val1;
+        zbus_chan_pub(&sensor_data_chan, &rh_data, K_MSEC(250));
+    }
+    #endif
+}
+
+>>>>>>> Stashed changes
 void sensorMgr_start(void)
 {
     LOG_INF("Sensor Mgr Started\n");
