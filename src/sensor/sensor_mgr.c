@@ -90,7 +90,7 @@ static void dht_init( void )
 {
     const struct device *const dht22 = DEVICE_DT_GET_ONE(aosong_dht);
 	if (!device_is_ready(dht22)) {
-		printf("Device %s is not ready\n", dht22->name);
+		LOG_ERR("Device %s is not ready\n", dht22->name);
 	}
 }
 
