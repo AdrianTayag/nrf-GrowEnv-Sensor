@@ -102,10 +102,6 @@ void telemetryMgr_start(void)
 	const struct zbus_channel *chan;
 	sensor_msg msg = {0};
 	while (!zbus_sub_wait_msg(&telemetry_mgr_sub, &chan, &msg, K_FOREVER)) {
-		
-
-		zbus_chan_read(chan, &msg, K_MSEC(200));
-
 		LOG_INF("TELEMETRY_MGR: Sensor msg received: Sensor = %u, Value = %u, ",
 			msg.sensor, msg.value);
 
