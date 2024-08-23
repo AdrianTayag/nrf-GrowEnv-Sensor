@@ -31,7 +31,7 @@ static const struct bt_data sd[] = {
 
 LOG_MODULE_REGISTER(telemetry_mgr, LOG_LEVEL_DBG);
 
-ZBUS_SUBSCRIBER_DEFINE(telemetry_mgr_sub, 5);
+ZBUS_MSG_SUBSCRIBER_DEFINE(telemetry_mgr_sub);
 
 static void connected(struct bt_conn *conn, uint8_t err)
 {
@@ -64,13 +64,14 @@ static void app_led_cb(bool led_state)
 
 static bool app_button_cb(void)
 {
-	// return app_button_state;
+	return true;
 }
 
 static struct bt_lbs_cb lbs_callbacs = {
 	.led_cb    = app_led_cb,
 	.button_cb = app_button_cb,
 };
+
 void telemetryMgr_start(void)
 {
     LOG_INF("Telemetry Mgr Started\n");
@@ -99,19 +100,17 @@ void telemetryMgr_start(void)
 		settings_load();
 	}
 	const struct zbus_channel *chan;
-    for(;;)
-    {
-		while (!zbus_sub_wait(&telemetry_mgr_sub, &chan, K_FOREVER)) {
-			sensor_msg msg;
+	sensor_msg msg = {0};
+	while (!zbus_sub_wait_msg(&telemetry_mgr_sub, &chan, &msg, K_FOREVER)) {
+		
 
-			zbus_chan_read(chan, &msg, K_MSEC(200));
+		zbus_chan_read(chan, &msg, K_MSEC(200));
 
-			LOG_INF("TELEMETRY_MGR: Sensor msg received: Sensor = %u, Value = %u, ",
-				msg.sensor, msg.value);
+		LOG_INF("TELEMETRY_MGR: Sensor msg received: Sensor = %u, Value = %u, ",
+			msg.sensor, msg.value);
 
-			// TODO: Send data via Bluetooth
-		}
-    }
+		// TODO: Send data via Bluetooth
+	}
 	LOG_ERR("TELEMETRY MGR Thread exited.\n");
 }
 

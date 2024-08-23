@@ -27,7 +27,7 @@ static bool app_button_state;
 
 LOG_MODULE_REGISTER(ui_mgr, LOG_LEVEL_DBG);
 
-ZBUS_SUBSCRIBER_DEFINE(ui_mgr_sub, 5);
+ZBUS_MSG_SUBSCRIBER_DEFINE(ui_mgr_sub);
 
 static void button_changed(uint32_t button_state, uint32_t has_changed)
 {
@@ -68,12 +68,8 @@ void uiMgr_start(void)
 		LOG_ERR("Button init failed (err %d)\n", err);
 	}
 	const struct zbus_channel *chan;
-
-	while (!zbus_sub_wait(&ui_mgr_sub, &chan, K_FOREVER)) {
-		sensor_msg msg;
-
-		zbus_chan_read(chan, &msg, K_MSEC(200));
-
+	sensor_msg msg = {0};
+	while (!zbus_sub_wait_msg(&ui_mgr_sub, &chan, &msg, K_FOREVER)) {
 		LOG_INF("UI_MGR: Sensor msg received: Sensor = %u, Value = %u, ",
 			msg.sensor, msg.value);
 		// TODO: Update display buffer, send work item for LCD display
