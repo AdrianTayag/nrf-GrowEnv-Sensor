@@ -68,16 +68,13 @@ void uiMgr_start(void)
 	// 	LOG_ERR("Button init failed (err %d)\n", err);
 	// }
 	const struct zbus_channel *chan;
-
-	while (1) {
-		sensor_msg msg = {0};
-		int ret = zbus_sub_wait_msg(&ui_mgr_sub, &chan, &msg, K_FOREVER);
-		LOG_INF("Zbus ret: %d\n", ret);
-
+	sensor_msg msg = {0};
+	while (!zbus_sub_wait_msg(&ui_mgr_sub, &chan, &msg, K_FOREVER)) {
 		LOG_INF("UI_MGR: Sensor msg received: Sensor = %u, Value = %u, ",
 			msg.sensor, msg.value);
 		// TODO: Update display buffer, send work item for LCD display
 	}
+	LOG_ERR("UI MGR Thread exited.\n");
 }
 
 K_THREAD_DEFINE(uiMgr_id, STACKSIZE, uiMgr_start, NULL, NULL, NULL,

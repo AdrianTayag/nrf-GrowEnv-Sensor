@@ -15,13 +15,15 @@
 #include <zephyr/drivers/adc.h>
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
+#include <zephyr/drivers/sensor.h>
 
-static int soilMoisture_init( void );
+static void soilMoisture_init( void );
 static void soilMoisture_read( void );
+void my_timer_handler(struct k_timer *dummy);
+void my_work_handler(struct k_work *work);
 
 static const struct adc_dt_spec adc_channel = ADC_DT_SPEC_GET(DT_PATH(zephyr_user));
 static int16_t buf;
-static uint32_t count;
 struct adc_sequence sequence = {
     .buffer = &buf,
     /* buffer size in bytes, not number of samples */
@@ -29,28 +31,32 @@ struct adc_sequence sequence = {
 };
 
 LOG_MODULE_REGISTER(sensor_mgr, LOG_LEVEL_DBG);
+K_THREAD_DEFINE(sensorMgr_id, STACKSIZE, sensorMgr_start, NULL, NULL, NULL,
+        THREAD_MID_PRIORITY, 0, 0);
+K_TIMER_DEFINE(my_timer, my_timer_handler, NULL);
+K_WORK_DEFINE(my_work, my_work_handler);
 
 ZBUS_CHAN_DECLARE(sensor_data_chan);
 
-static int soilMoisture_init( void )
+static void soilMoisture_init( void )
 {
     int ret = false;
 
 	if (!adc_is_ready_dt(&adc_channel)) {
 		LOG_ERR("ADC controller devivce %s not ready", adc_channel.dev->name);
-		return 0;
+		return;
 	}
 
 	ret = adc_channel_setup_dt(&adc_channel);
 	if (ret < 0) {
 		LOG_ERR("Could not setup channel #%d (%d)", 0, ret);
-		return 0;
+		return;
 	}
 
 	ret = adc_sequence_init_dt(&adc_channel, &sequence);
 	if (ret < 0) {
 		LOG_ERR("Could not initalize sequnce");
-		return 0;
+		return;
 	}
 }
 
@@ -65,28 +71,18 @@ static void soilMoisture_read( void )
     }
 
     val_mv = (int)buf;
-    LOG_INF("ADC reading[%u]: %s, channel %d: Raw: %d", count++, adc_channel.dev->name,
-        adc_channel.channel_id, val_mv);
 
     ret = adc_raw_to_millivolts_dt(&adc_channel, &val_mv);
     if (ret < 0) {
         LOG_WRN(" (value in mV not available)\n");
     } 
     else {
-        LOG_INF(" = %d mV", val_mv);
+        LOG_INF("Soil ADC Reading = %d mV", val_mv);
         sensor_msg soil_data = {0};
 
         soil_data.sensor = SOIL_MOISTURE;
-<<<<<<< Updated upstream
-        soil_data.value = ret;
+        soil_data.value = val_mv;
         zbus_chan_pub(&sensor_data_chan, &soil_data, K_MSEC(250));
-    }
-}
-
-=======
-        soil_data.value = 20;
-        int zbus_ret = zbus_chan_pub(&sensor_data_chan, &soil_data, K_FOREVER);
-        LOG_INF("ZBUS Publish: %d\n", zbus_ret);
     }
 }
 
@@ -94,7 +90,7 @@ static void dht_init( void )
 {
     const struct device *const dht22 = DEVICE_DT_GET_ONE(aosong_dht);
 	if (!device_is_ready(dht22)) {
-		LOG_INF("Device %s is not ready\n", dht22->name);
+		LOG_ERR("Device %s is not ready\n", dht22->name);
 	}
 }
 
@@ -154,18 +150,26 @@ static void dht_read( void )
     #endif
 }
 
->>>>>>> Stashed changes
 void sensorMgr_start(void)
 {
     LOG_INF("Sensor Mgr Started\n");
     soilMoisture_init();
+    dht_init();
+    k_timer_start(&my_timer, K_MSEC(100), K_MSEC(2000));
     for(;;)
     {
-        // Convert to timer based once ZBus is implemented
-        soilMoisture_read();
-        k_msleep(1000);
+        k_sleep( K_FOREVER );
     }
 }
 
-K_THREAD_DEFINE(sensorMgr_id, STACKSIZE, sensorMgr_start, NULL, NULL, NULL,
-        THREAD_MID_PRIORITY, 0, 0);
+void my_work_handler(struct k_work *work)
+{
+    /* do the processing that needs to be done periodically */
+    soilMoisture_read();
+    dht_read();
+}
+
+void my_timer_handler(struct k_timer *dummy)
+{
+    k_work_submit(&my_work);
+}
