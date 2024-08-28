@@ -5,7 +5,6 @@ project(nrf-GrowEnv)
 
 # NORDIC SDK APP START
 add_subdirectory(src)
-# add_subdirectory(tests)
 
 # NORDIC SDK APP END
 zephyr_library_include_directories(.)
