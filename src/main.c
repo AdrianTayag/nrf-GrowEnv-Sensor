@@ -16,9 +16,11 @@
 
 #include <soc.h>
 
+LOG_MODULE_REGISTER(main_func, LOG_LEVEL_DBG);
+
 int main(void)
 {
-	printk("Starting NRF GrowEnv Sensor Application...\n");
+	LOG_INF("Starting NRF GrowEnv Sensor Application...");
 	
 	// Main thread exits, freeing up memory
 	return 0;

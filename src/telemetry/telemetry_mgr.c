@@ -19,8 +19,7 @@
 #include <zephyr/bluetooth/gatt.h>
 #include <bluetooth/services/lbs.h>
 #include <zephyr/settings/settings.h>
-
-#ifndef CONFIG_BOARD_NATIVE_SIM
+#include <dk_buttons_and_leds.h>
 
 static const struct bt_data ad[] = {
 	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
@@ -44,14 +43,14 @@ static void connected(struct bt_conn *conn, uint8_t err)
 
 	LOG_INF("Connected\n");
 
-	// dk_set_led_on(CON_STATUS_LED);
+	dk_set_led_on(CON_STATUS_LED);
 }
 
 static void disconnected(struct bt_conn *conn, uint8_t reason)
 {
 	LOG_INF("Disconnected (reason %u)\n", reason);
 
-	// dk_set_led_off(CON_STATUS_LED);
+	dk_set_led_off(CON_STATUS_LED);
 }
 
 BT_CONN_CB_DEFINE(conn_callbacks) = {
@@ -61,7 +60,7 @@ BT_CONN_CB_DEFINE(conn_callbacks) = {
 
 static void app_led_cb(bool led_state)
 {
-	// dk_set_led(USER_LED, led_state);
+	dk_set_led(USER_LED, led_state);
 }
 
 static bool app_button_cb(void)
@@ -114,5 +113,3 @@ void telemetryMgr_start(void)
 
 K_THREAD_DEFINE(telemetryMgr_id, STACKSIZE, telemetryMgr_start, NULL, NULL, NULL,
 		THREAD_MID_PRIORITY, 0, 0);
-
-#endif // CONFIG_BOARD_NATIVE_SIM
