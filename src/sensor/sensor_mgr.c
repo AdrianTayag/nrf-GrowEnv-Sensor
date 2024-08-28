@@ -96,6 +96,17 @@ static void dht_init( void )
 
 static void dht_read( void )
 {
+    sensor_msg temp_data = {0};
+    sensor_msg rh_data = {0};
+#ifdef CONFIG_BOARD_NATIVE_SIM
+        temp_data.sensor = TEMPERATURE;
+        temp_data.value = 32;
+        LOG_INF("Reading Temperature: %d", temp_data.value);
+
+        rh_data.sensor = RELATIVE_HUMIDITY;
+        rh_data.value = 80;
+        LOG_INF("Reading Relative Humidity: %d", rh_data.value);
+#else
     const struct device *const dht22 = DEVICE_DT_GET_ONE(aosong_dht);
     int rc = sensor_sample_fetch(dht22);
     if (rc != 0) {
@@ -117,25 +128,22 @@ static void dht_read( void )
     }
     else
     {
-        LOG_INF("DHT %d Cel ; %d %%RH\n",
-                temperature.val1,
-                humidity.val1);
-
-        sensor_msg temp_data = {0};
         temp_data.sensor = TEMPERATURE;
         temp_data.value = temperature.val1;
-        zbus_chan_pub(&sensor_data_chan, &temp_data, K_MSEC(250));
-
-        sensor_msg rh_data = {0};
         rh_data.sensor = RELATIVE_HUMIDITY;
         rh_data.value = humidity.val1;
-        zbus_chan_pub(&sensor_data_chan, &rh_data, K_MSEC(250));
+
+        LOG_INF("Reading Temperature: %d\n", temp_data.value);
+        LOG_INF("Reading Relative Humidity: %d\n", rh_data.value);
     }
+#endif
+    zbus_chan_pub(&sensor_data_chan, &temp_data, K_MSEC(250));
+    zbus_chan_pub(&sensor_data_chan, &rh_data, K_MSEC(250));
 }
 
 void sensorMgr_start(void)
 {
-    LOG_INF("Sensor Mgr Started\n");
+    LOG_INF("Sensor Mgr Started");
     soilMoisture_init();
     dht_init();
     k_timer_start(&my_timer, K_MSEC(100), K_MSEC(2000));
