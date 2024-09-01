@@ -88,13 +88,27 @@ void telemetryMgr_start(void)
 	if (IS_ENABLED(CONFIG_SETTINGS)) {
 		settings_load();
 	}
+
 	const struct zbus_channel *chan;
 	sensor_msg msg = {0};
 	while (!zbus_sub_wait_msg(&telemetry_mgr_sub, &chan, &msg, K_FOREVER)) {
 		LOG_INF("TELEMETRY_MGR: Sensor msg received: Sensor = %u, Value = %u, ",
 			msg.sensor, msg.value);
 
-		// TODO: Send data via Bluetooth
+		switch (msg.sensor) {
+		case TEMPERATURE:
+			ess_update_temp_value(msg.value);
+			break;
+		case RELATIVE_HUMIDITY:
+			ess_update_humidity_value(msg.value);
+			break;
+		case SOIL_MOISTURE:
+			ess_update_soil_moisture_value(msg.value);
+			break;
+		default:
+			LOG_ERR("TELEMETRY_MGR: Invalid sensor type\n");
+			break;
+		}
 	}
 	LOG_ERR("TELEMETRY MGR Thread exited.\n");
 }

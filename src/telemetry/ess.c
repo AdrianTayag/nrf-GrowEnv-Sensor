@@ -80,39 +80,32 @@ static ssize_t read_u16(struct bt_conn *conn, const struct bt_gatt_attr *attr,
 				 sizeof(value));
 }
 
-
 /* Environmental Sensing Service Declaration */
 BT_GATT_SERVICE_DEFINE(ess_svc,
     BT_GATT_PRIMARY_SERVICE(BT_UUID_ESS),
     // Temperature
-    // Characteristic + Value?
     BT_GATT_CHARACTERISTIC(BT_UUID_TEMPERATURE,
                 BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY,
                 BT_GATT_PERM_READ,
                 read_u16, NULL, &temp_value),
-    // Descriptor?
     BT_GATT_DESCRIPTOR(BT_UUID_ES_MEASUREMENT,
                 BT_GATT_PERM_READ, read_es_measurement, NULL, &meas),
     BT_GATT_CUD(SENSOR_1_NAME, BT_GATT_PERM_READ),
 
     // Humidity
-    // Characteristic + Value?
     BT_GATT_CHARACTERISTIC(BT_UUID_HUMIDITY,
                 BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY,
                 BT_GATT_PERM_READ,
                 read_u16, NULL, &humidity_value),
-    // Descriptor?
     BT_GATT_DESCRIPTOR(BT_UUID_ES_MEASUREMENT,
                 BT_GATT_PERM_READ, read_es_measurement, NULL, &meas),
     BT_GATT_CUD(SENSOR_2_NAME, BT_GATT_PERM_READ),
 
     // Soil Moisture
-    // Characteristic + Value?
-    BT_GATT_CHARACTERISTIC(BT_UUID_HUMIDITY,
+    BT_GATT_CHARACTERISTIC(BT_UUID_RAINFALL,
                 BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY,
                 BT_GATT_PERM_READ,
                 read_u16, NULL, &soil_moisture_value),
-    // Descriptor?
     BT_GATT_DESCRIPTOR(BT_UUID_ES_MEASUREMENT,
                 BT_GATT_PERM_READ, read_es_measurement, NULL, &meas),
     BT_GATT_CUD(SENSOR_3_NAME, BT_GATT_PERM_READ),
@@ -121,4 +114,19 @@ BT_GATT_SERVICE_DEFINE(ess_svc,
 int ess_init( void )
 {
 	return 0;
+}
+
+void ess_update_temp_value(int16_t new_value)
+{
+	temp_value = new_value;
+}
+
+void ess_update_humidity_value(int16_t new_value)
+{
+	humidity_value = new_value;
+}
+
+void ess_update_soil_moisture_value(int16_t new_value)
+{
+	soil_moisture_value = new_value;
 }
