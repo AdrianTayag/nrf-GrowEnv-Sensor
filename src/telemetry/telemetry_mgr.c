@@ -8,6 +8,7 @@
 #include "telemetry_mgr.h"
 #include "product_cfg.h"
 #include "product_msgs.h"
+#include "ess.h"
 
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
@@ -17,9 +18,20 @@
 #include <zephyr/bluetooth/conn.h>
 #include <zephyr/bluetooth/uuid.h>
 #include <zephyr/bluetooth/gatt.h>
-#include <bluetooth/services/lbs.h>
 #include <zephyr/settings/settings.h>
 #include <dk_buttons_and_leds.h>
+
+static void connected(struct bt_conn *conn, uint8_t err);
+static void disconnected(struct bt_conn *conn, uint8_t reason);
+
+LOG_MODULE_REGISTER(telemetry_mgr, LOG_LEVEL_DBG);
+
+ZBUS_MSG_SUBSCRIBER_DEFINE(telemetry_mgr_sub);
+
+BT_CONN_CB_DEFINE(conn_callbacks) = {
+	.connected        = connected,
+	.disconnected     = disconnected,
+};
 
 static const struct bt_data ad[] = {
 	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
@@ -27,12 +39,8 @@ static const struct bt_data ad[] = {
 };
 
 static const struct bt_data sd[] = {
-	BT_DATA_BYTES(BT_DATA_UUID128_ALL, BT_UUID_LBS_VAL),
+	BT_DATA_BYTES(BT_DATA_UUID16_ALL, BT_UUID_16_ENCODE(BT_UUID_ESS_VAL)),
 };
-
-LOG_MODULE_REGISTER(telemetry_mgr, LOG_LEVEL_DBG);
-
-ZBUS_MSG_SUBSCRIBER_DEFINE(telemetry_mgr_sub);
 
 static void connected(struct bt_conn *conn, uint8_t err)
 {
@@ -53,26 +61,6 @@ static void disconnected(struct bt_conn *conn, uint8_t reason)
 	dk_set_led_off(CON_STATUS_LED);
 }
 
-BT_CONN_CB_DEFINE(conn_callbacks) = {
-	.connected        = connected,
-	.disconnected     = disconnected,
-};
-
-static void app_led_cb(bool led_state)
-{
-	dk_set_led(USER_LED, led_state);
-}
-
-static bool app_button_cb(void)
-{
-	return true;
-}
-
-static struct bt_lbs_cb lbs_callbacs = {
-	.led_cb    = app_led_cb,
-	.button_cb = app_button_cb,
-};
-
 void telemetryMgr_start(void)
 {
     LOG_INF("Telemetry Mgr Started\n");
@@ -84,9 +72,9 @@ void telemetryMgr_start(void)
 	}
 
 	LOG_INF("Bluetooth initialized\n");
-	err = bt_lbs_init(&lbs_callbacs);
+	err = ess_init();
 	if (err) {
-		LOG_ERR("Failed to init LBS (err:%d)\n", err);
+		LOG_ERR("Failed to init ESS (err:%d)\n", err);
 	}
 
 	err = bt_le_adv_start(BT_LE_ADV_CONN, ad, ARRAY_SIZE(ad),
@@ -100,13 +88,27 @@ void telemetryMgr_start(void)
 	if (IS_ENABLED(CONFIG_SETTINGS)) {
 		settings_load();
 	}
+
 	const struct zbus_channel *chan;
 	sensor_msg msg = {0};
 	while (!zbus_sub_wait_msg(&telemetry_mgr_sub, &chan, &msg, K_FOREVER)) {
 		LOG_INF("TELEMETRY_MGR: Sensor msg received: Sensor = %u, Value = %u, ",
 			msg.sensor, msg.value);
 
-		// TODO: Send data via Bluetooth
+		switch (msg.sensor) {
+		case TEMPERATURE:
+			ess_update_temp_value(msg.value);
+			break;
+		case RELATIVE_HUMIDITY:
+			ess_update_humidity_value(msg.value);
+			break;
+		case SOIL_MOISTURE:
+			ess_update_soil_moisture_value(msg.value);
+			break;
+		default:
+			LOG_ERR("TELEMETRY_MGR: Invalid sensor type\n");
+			break;
+		}
 	}
 	LOG_ERR("TELEMETRY MGR Thread exited.\n");
 }
